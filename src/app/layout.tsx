@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="h-full" suppressHydrationWarning>
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col gap-40`}
       >
@@ -39,10 +39,13 @@ export default function RootLayout({
           <div className="fixed top-4 right-4 z-50">
             <ModeToggle />
           </div>
-          <main className="flex-1 w-full px-30">{children}</main>
+          <main>
+            {children}
+          </main>
           <Footer />
         </ThemeProvider>
       </body>
     </html>
   );
 }
+//test branch dev
