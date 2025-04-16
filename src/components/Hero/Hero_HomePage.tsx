@@ -12,7 +12,7 @@ export default function Hero_HomePage() {
           <p className="text-4xl">The place of everything</p>
         </div>
         <Button size="lg" asChild>
-          <Link href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">🚧 Under construction 🚧</Link>
+          <Link href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">🚧 En construction 🚧</Link>
         </Button>
       </section>
     </div>
