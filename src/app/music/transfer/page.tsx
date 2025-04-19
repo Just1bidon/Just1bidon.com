@@ -3,12 +3,7 @@
 import Hero_MusicTransferPage from "@/components/Hero/Hero_MusicTransferPage";
 import { useState, useEffect } from "react";
 import { getSpotifyToken, testSpotifyAPI } from "@/app/actions/spotify";
-
-// Interfaces pour le typage
-interface TokenData {
-  accessToken: string;
-  expiresAt: number;
-}
+import ArtistCard from "@/components/Card/ArtistCard";
 
 interface SpotifyArtist {
   id: string;
@@ -95,76 +90,51 @@ export default function Home() {
   return (
     <section className="w-full h-full flex flex-col justify-center items-center">
       <Hero_MusicTransferPage />
-      <section className="w-[1200px] p-6">
+      <section className="max-w-[1200px] w-full p-6">
         <h2 className="text-2xl font-bold mb-4">Statut du Token Spotify</h2>
+        <div className="p-4 rounded-md border-1">
+          {loading && <p className="text-blue-500">Chargement en cours...</p>}
+          {error && <p className="text-red-500">Erreur: {error}</p>}
 
-        {loading && <p className="text-blue-500">Chargement en cours...</p>}
-        {error && <p className="text-red-500">Erreur: {error}</p>}
+          {token && (
+            <div className="mb-6">
+                <p className="font-semibold mb-4">Bearer Token:</p>
+                <p className="text-sm break-all bg-gray2 p-4 rounded mb-2">
+                  {token}
+                </p>
 
-        {token && (
-          <div className="mb-6">
-            <div className="bg-gray-100 p-4 rounded-md mb-4">
-              <p className="font-semibold">Bearer Token:</p>
-              <p className="text-sm break-all bg-gray-200 p-2 rounded">
-                {token}
+              <p className="text-xs">
+                <span className="font-semibold">Expiration:</span>{" "}
+                {timeRemaining}
               </p>
             </div>
+          )}
+        </div>
+      </section>
 
-            <p className="text-gray-700">
-              <span className="font-semibold">Expiration:</span> {timeRemaining}
-            </p>
-          </div>
-        )}
-
+      <section className="flex gap-4">
         {artistData && (
-          <div className="mt-8">
-            <h3 className="text-xl font-bold mb-2">Test API Réussi</h3>
-            <div className="bg-gray-100 p-4 rounded-md">
-              <div className="flex items-center mb-4">
-                {artistData.images && artistData.images[0] && (
-                  <img
-                    src={artistData.images[0].url}
-                    alt={artistData.name}
-                    className="w-24 h-24 rounded-full mr-4"
-                  />
-                )}
-                <div>
-                  <h4 className="text-lg font-bold">{artistData.name}</h4>
-                  <p className="text-gray-600">
-                    Popularité: {artistData.popularity}/100
-                  </p>
-                  <p className="text-gray-600">
-                    Followers: {artistData.followers?.total?.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              {artistData.genres && (
-                <div>
-                  <p className="font-semibold">Genres:</p>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {artistData.genres.map((genre, index) => (
-                      <span
-                        key={index}
-                        className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm"
-                      >
-                        {genre}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="flex gap-4 h-min">
+            <ArtistCard
+              image={artistData.images?.[0]?.url || ""}
+              name={artistData.name}
+              popularity={artistData.popularity}
+              genres={artistData.genres || []}
+              followers={artistData.followers?.total || 0}
+            />
           </div>
         )}
-
-        {!token && !loading && (
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-          >
-            Obtenir un nouveau token
-          </button>
+        {artistData && (
+          <div className="flex gap-4">
+            <ArtistCard
+              image={artistData.images?.[0]?.url || ""}
+              name={artistData.name}
+              popularity={artistData.popularity}
+              genres={artistData.genres || []}
+              followers={artistData.followers?.total || 0}
+              size="large"
+            />
+          </div>
         )}
       </section>
     </section>

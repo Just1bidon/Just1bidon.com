@@ -1,6 +1,6 @@
 "use server";
 
-interface TokenData {
+export interface TokenData {
   accessToken: string;
   expiresAt: number;
 }
