@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ModeToggle } from "@/components/mode-toggle";
 import { Analytics } from "@vercel/analytics/react";
 
 const geistSans = Geist({
@@ -45,4 +44,3 @@ export default function RootLayout({
     </html>
   );
 }
-//test branch dev
