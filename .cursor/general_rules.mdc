@@ -1,0 +1,31 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Commit Message Guidelines
+
+Always begin your commit message with one of the following keywords:
+
+- **ADD**: Use when adding new features or functionalities.  
+  _Example_: `ADD user profile card with avatar`
+
+- **UPD**: Use when updating or refactoring existing code or features.  
+  _Example_: `UPD navbar layout to be responsive`
+
+- **DEL**: Use when removing code or features, such as cleaning up unused components.  
+  _Example_: `DEL old authentication methods`
+
+- **FIX**: Use when fixing bugs or issues, including deployment problems.  
+  _Example_: `FIX Vercel deploy issue with dynamic routes`
+
+---
+
+# UI Libraries
+
+This project uses the following component libraries:
+
+- **[ShadCN UI](mdc:https:/ui.shadcn.dev)** – A customizable component library built on top of Tailwind CSS and Radix UI.
+- **[Acernity UI](mdc:https:/www.acernity-ui.com)** – A modern UI kit for building elegant and accessible React apps.
+
+Refer to their official documentation for best practices, customization, and available components.
