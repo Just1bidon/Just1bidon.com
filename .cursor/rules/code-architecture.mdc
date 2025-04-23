@@ -1,0 +1,36 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Architecture du Code Source
+
+## Organisation des Dossiers
+
+Le code source est organisé en trois dossiers principaux dans `src/` :
+
+### App
+Le dossier `app/` suit l'architecture des routes de Next.js 13+. Chaque sous-dossier représente une route de l'application.
+
+### Components
+Le dossier `components/` contient tous les composants réutilisables de l'application. Les composants doivent être :
+- Modulaires et réutilisables
+- Bien documentés avec des types TypeScript
+- Accompagnés de leurs propres styles si nécessaire
+
+### Lib
+Le dossier `lib/` contient les utilitaires, les hooks personnalisés et les services partagés.
+
+## Bonnes Pratiques
+
+1. Utiliser des composants fonctionnels avec des hooks
+2. Séparer la logique métier des composants UI
+3. Maintenir une structure de dossiers cohérente
+4. Utiliser des imports absolus depuis la racine `src/`
+
+## Conventions de Nommage
+
+- Fichiers de composants : PascalCase (ex: `Button.tsx`)
+- Fichiers utilitaires : camelCase (ex: `useAuth.ts`)
+- Pages : `page.tsx` dans leurs dossiers respectifs
+- Layouts : `layout.tsx` pour les mises en page partagées
