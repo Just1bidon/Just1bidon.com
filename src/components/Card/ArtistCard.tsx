@@ -19,7 +19,7 @@ export default function ArtistCard({
 }: ArtistCardProps) {
   if (size === "small") {
     return (
-      <div className="flex gap-3 px-6 py-4 h-full rounded-lg border-1">
+      <div className="flex gap-3 px-4 py-2 h-full rounded-lg border-1">
         <div className="w-[50px] h-[50px] rounded-full overflow-hidden">
           <Image src={image} alt={name} width={50} height={50} />
         </div>

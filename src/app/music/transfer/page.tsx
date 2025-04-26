@@ -5,8 +5,8 @@ import { useState, useEffect } from "react";
 import { getSpotifyToken, testSpotifyAPI } from "@/app/actions/spotify";
 import ArtistCard from "@/components/Card/ArtistCard";
 import { Button } from "@/components/ui/button";
-import { signIn, useSession } from "next-auth/react";
-
+import { signIn, signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 interface SpotifyArtist {
   id: string;
   name: string;
@@ -22,8 +22,138 @@ interface SpotifyArtist {
   genres?: string[];
 }
 
-export default function Home() {
+function SpotifyAuthSection() {
   const { data: session, status } = useSession();
+  const [tracks, setTracks] = useState<any[]>([]);
+  const [loadingTracks, setLoadingTracks] = useState(false);
+  const [errorTracks, setErrorTracks] = useState<string | null>(null);
+  const [awaitingFullLogout, setAwaitingFullLogout] = useState(false);
+
+  // Déconnexion totale : ouvre le logout Spotify dans un nouvel onglet et affiche un message sur le site
+  const handleFullLogout = () => {
+    window.open("https://accounts.spotify.com/logout", "_blank");
+    setAwaitingFullLogout(true);
+  };
+
+  useEffect(() => {
+    const fetchTracks = async () => {
+      if (status !== "authenticated" || !(session as any)?.accessToken) return;
+      setLoadingTracks(true);
+      setErrorTracks(null);
+      try {
+        const res = await fetch(
+          "https://api.spotify.com/v1/me/tracks?limit=3",
+          {
+            headers: {
+              Authorization: `Bearer ${(session as any).accessToken}`,
+            },
+          }
+        );
+        if (!res.ok)
+          throw new Error("Erreur lors de la récupération des musiques");
+        const data = await res.json();
+        setTracks(data.items || []);
+      } catch (e: any) {
+        setErrorTracks(e.message);
+      } finally {
+        setLoadingTracks(false);
+      }
+    };
+    fetchTracks();
+  }, [status, session]);
+
+  useEffect(() => {
+    if (awaitingFullLogout) {
+      const timer = setTimeout(() => {
+        signOut({ callbackUrl: "/music/transfer" });
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [awaitingFullLogout]);
+
+  if (status === "loading") return <p>Chargement...</p>;
+  if (awaitingFullLogout) {
+    return (
+      <div className="my-8 flex flex-col items-center gap-4">
+        <p className="text-orange-600 font-bold">Déconnexion en cours…</p>
+        <p>Merci de patienter quelques secondes.</p>
+      </div>
+    );
+  }
+  if (status === "authenticated")
+    return (
+      <div className="my-8 flex flex-col items-center gap-4">
+        <p className="text-green-600 font-bold">
+          Connecté à Spotify en tant que :
+        </p>
+        <p>{session?.user?.email}</p>
+        <p>{session?.user?.name}</p>
+        <Image
+          src={session?.user?.image || ""}
+          alt="User Avatar"
+          width={100}
+          height={100}
+        />
+        <ArtistCard
+          image={session?.user?.image || ""}
+          name={session?.user?.name || ""}
+          popularity={0}
+          genres={[]}
+          followers={session?.user?.email?.length}
+        />
+        <div className="flex gap-2 mt-4">
+          <Button
+            variant="destructive"
+            onClick={() => signOut({ callbackUrl: "/music/transfer" })}
+          >
+            Se déconnecter (session)
+          </Button>
+          <Button variant="destructive" onClick={handleFullLogout}>
+            Se déconnecter totalement
+          </Button>
+        </div>
+        <div className="mt-8 w-full max-w-md">
+          <h3 className="font-bold mb-2">3 dernières musiques likées :</h3>
+          {loadingTracks && <p>Chargement des musiques...</p>}
+          {errorTracks && <p className="text-red-500">{errorTracks}</p>}
+          <ul>
+            {tracks.map((item, idx) => (
+              <li key={item.track.id} className="mb-2 flex items-center gap-2">
+                <Image
+                  src={
+                    item.track.album.images[2]?.url ||
+                    item.track.album.images[0]?.url ||
+                    ""
+                  }
+                  alt={item.track.name}
+                  width={40}
+                  height={40}
+                  className="rounded"
+                />
+                <div>
+                  <div className="font-semibold">{item.track.name}</div>
+                  <div className="text-xs text-gray-500">
+                    {item.track.artists.map((a: any) => a.name).join(", ")}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  return (
+    <Button
+      size="lg"
+      className="my-8"
+      onClick={() => signIn("spotify", { callbackUrl: "/music/transfer" })}
+    >
+      Se connecter à Spotify
+    </Button>
+  );
+}
+
+export default function Home() {
   const [token, setToken] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [artistData, setArtistData] = useState<SpotifyArtist | null>(null);
@@ -93,20 +223,7 @@ export default function Home() {
   return (
     <section className="w-full h-full flex flex-col justify-center items-center">
       <Hero_MusicTransferPage />
-      {status === "loading" && <p>Chargement...</p>}
-      {status === "authenticated" ? (
-        <div className="my-8">
-          <p className="text-green-600 font-bold">Connecté à Spotify !</p>
-        </div>
-      ) : (
-        <Button
-          size="lg"
-          className="my-8"
-          onClick={() => signIn("spotify", { callbackUrl: "/music/transfer" })}
-        >
-          Se connecter à Spotify
-        </Button>
-      )}
+      <SpotifyAuthSection />
       <section className="max-w-[1200px] w-full p-6">
         <h2 className="text-2xl font-bold mb-4">Statut du Token Spotify</h2>
         <div className="p-4 rounded-md border-1">
