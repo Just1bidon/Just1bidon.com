@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+L'IA doit utiliser pnpm par défaut pour toutes les commandes liées à la gestion des dépendances.
+
+L'IA doit effectuer les modifications de code directement sans demander de confirmation, sauf si cela implique des changements majeurs ou des décisions importantes.
