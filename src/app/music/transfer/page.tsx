@@ -61,7 +61,7 @@ function SpotifyAuthSection() {
           {
             headers: {
               Authorization: `Bearer ${
-                (session as unknown as { [key: string]: any }).accessToken
+                (session as unknown as { [key: string]: string }).accessToken
               }`,
             },
           }
