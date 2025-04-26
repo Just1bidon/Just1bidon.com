@@ -4,6 +4,8 @@ import Hero_MusicTransferPage from "@/components/Hero/Hero_MusicTransferPage";
 import { useState, useEffect } from "react";
 import { getSpotifyToken, testSpotifyAPI } from "@/app/actions/spotify";
 import ArtistCard from "@/components/Card/ArtistCard";
+import { Button } from "@/components/ui/button";
+import { signIn, useSession } from "next-auth/react";
 
 interface SpotifyArtist {
   id: string;
@@ -21,6 +23,7 @@ interface SpotifyArtist {
 }
 
 export default function Home() {
+  const { data: session, status } = useSession();
   const [token, setToken] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [artistData, setArtistData] = useState<SpotifyArtist | null>(null);
@@ -90,6 +93,20 @@ export default function Home() {
   return (
     <section className="w-full h-full flex flex-col justify-center items-center">
       <Hero_MusicTransferPage />
+      {status === "loading" && <p>Chargement...</p>}
+      {status === "authenticated" ? (
+        <div className="my-8">
+          <p className="text-green-600 font-bold">Connecté à Spotify !</p>
+        </div>
+      ) : (
+        <Button
+          size="lg"
+          className="my-8"
+          onClick={() => signIn("spotify", { callbackUrl: "/music/transfer" })}
+        >
+          Se connecter à Spotify
+        </Button>
+      )}
       <section className="max-w-[1200px] w-full p-6">
         <h2 className="text-2xl font-bold mb-4">Statut du Token Spotify</h2>
         <div className="p-4 rounded-md border-1">
@@ -98,10 +115,10 @@ export default function Home() {
 
           {token && (
             <div className="mb-6">
-                <p className="font-semibold mb-4">Bearer Token:</p>
-                <p className="text-sm break-all bg-gray2 p-4 rounded mb-2">
-                  {token}
-                </p>
+              <p className="font-semibold mb-4">Bearer Token:</p>
+              <p className="text-sm break-all bg-gray2 p-4 rounded mb-2">
+                {token}
+              </p>
 
               <p className="text-xs">
                 <span className="font-semibold">Expiration:</span>{" "}
