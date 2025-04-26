@@ -67,18 +67,21 @@ export default function SpotifyAuthBlock() {
 
   if (status === "authenticated")
     return (
-      <div className="my-8 flex flex-col items-center gap-4">
-        <ArtistCard
-          image={session?.user?.image || ""}
-          name={session?.user?.name || ""}
-          popularity={0}
-          genres={[]}
-          followers={0}
-          email={session?.user?.email || undefined}
-        />
-        <div className="flex gap-2 mt-4">
-          <LogoutButton type="session" />
-          <LogoutButton type="full" />
+      <div className="my-8 flex items-center gap-4">
+        <div>
+          <ArtistCard
+            image={session?.user?.image || ""}
+            name={session?.user?.name || ""}
+            popularity={0}
+            genres={[]}
+            followers={0}
+            email={session?.user?.email || undefined}
+            size="small"
+          />
+          <div className="flex gap-2 mt-4">
+            <LogoutButton type="session" />
+            <LogoutButton type="full" />
+          </div>
         </div>
         <div className="mt-8 w-full max-w-md">
           <h3 className="font-bold mb-2">3 dernières musiques likées :</h3>

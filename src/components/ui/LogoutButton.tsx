@@ -11,7 +11,7 @@ export default function LogoutButton({ type }: LogoutButtonProps) {
 
   if (type === "full") {
     if (awaitingFullLogout) {
-      setTimeout(() => signOut({ callbackUrl: "/music/transfer" }), 4000);
+      setTimeout(() => signOut({ callbackUrl: "/music/transfer" }), 2000);
       return (
         <div className="flex flex-col items-center gap-2">
           <p className="text-orange-600 font-bold">Déconnexion en cours…</p>

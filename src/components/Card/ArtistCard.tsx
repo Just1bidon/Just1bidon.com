@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ArtistCardProps {
   image: string;
@@ -22,9 +23,12 @@ export default function ArtistCard({
   if (size === "small") {
     return (
       <div className="flex gap-3 px-4 py-2 h-full rounded-lg border-1">
-        <div className="w-[50px] h-[50px] rounded-full overflow-hidden">
-          <Image src={image} alt={name} width={50} height={50} />
-        </div>
+        <Avatar size="large">
+          <AvatarImage src={image} className="w-full h-full" />
+          <AvatarFallback className="w-full h-full text-2xl">
+            {name.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
         <div>
           <h2 className="text-xl font-bold">{name}</h2>
           {email ? (
