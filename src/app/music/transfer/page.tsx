@@ -24,7 +24,18 @@ interface SpotifyArtist {
 
 function SpotifyAuthSection() {
   const { data: session, status } = useSession();
-  const [tracks, setTracks] = useState<any[]>([]);
+  const [tracks, setTracks] = useState<
+    {
+      track: {
+        id: string;
+        name: string;
+        album: {
+          images: { url: string }[];
+        };
+        artists: { name: string }[];
+      };
+    }[]
+  >([]);
   const [loadingTracks, setLoadingTracks] = useState(false);
   const [errorTracks, setErrorTracks] = useState<string | null>(null);
   const [awaitingFullLogout, setAwaitingFullLogout] = useState(false);
@@ -37,7 +48,11 @@ function SpotifyAuthSection() {
 
   useEffect(() => {
     const fetchTracks = async () => {
-      if (status !== "authenticated" || !(session as any)?.accessToken) return;
+      if (
+        status !== "authenticated" ||
+        !(session as unknown as { [key: string]: unknown })?.accessToken
+      )
+        return;
       setLoadingTracks(true);
       setErrorTracks(null);
       try {
@@ -45,7 +60,9 @@ function SpotifyAuthSection() {
           "https://api.spotify.com/v1/me/tracks?limit=3",
           {
             headers: {
-              Authorization: `Bearer ${(session as any).accessToken}`,
+              Authorization: `Bearer ${
+                (session as unknown as { [key: string]: any }).accessToken
+              }`,
             },
           }
         );
@@ -53,8 +70,12 @@ function SpotifyAuthSection() {
           throw new Error("Erreur lors de la récupération des musiques");
         const data = await res.json();
         setTracks(data.items || []);
-      } catch (e: any) {
-        setErrorTracks(e.message);
+      } catch (e) {
+        if (e instanceof Error) {
+          setErrorTracks(e.message);
+        } else {
+          setErrorTracks("Erreur inconnue");
+        }
       } finally {
         setLoadingTracks(false);
       }
@@ -99,7 +120,7 @@ function SpotifyAuthSection() {
           name={session?.user?.name || ""}
           popularity={0}
           genres={[]}
-          followers={session?.user?.email?.length}
+          followers={session?.user?.email?.length ?? 0}
         />
         <div className="flex gap-2 mt-4">
           <Button
@@ -117,7 +138,7 @@ function SpotifyAuthSection() {
           {loadingTracks && <p>Chargement des musiques...</p>}
           {errorTracks && <p className="text-red-500">{errorTracks}</p>}
           <ul>
-            {tracks.map((item, idx) => (
+            {tracks.map((item) => (
               <li key={item.track.id} className="mb-2 flex items-center gap-2">
                 <Image
                   src={
@@ -133,7 +154,7 @@ function SpotifyAuthSection() {
                 <div>
                   <div className="font-semibold">{item.track.name}</div>
                   <div className="text-xs text-gray-500">
-                    {item.track.artists.map((a: any) => a.name).join(", ")}
+                    {item.track.artists.map((a) => a.name).join(", ")}
                   </div>
                 </div>
               </li>
