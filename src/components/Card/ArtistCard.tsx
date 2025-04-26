@@ -7,6 +7,7 @@ interface ArtistCardProps {
   genres: string[];
   followers: number;
   size?: "small" | "large";
+  email?: string;
 }
 
 export default function ArtistCard({
@@ -16,6 +17,7 @@ export default function ArtistCard({
   genres,
   followers,
   size = "small",
+  email,
 }: ArtistCardProps) {
   if (size === "small") {
     return (
@@ -25,7 +27,11 @@ export default function ArtistCard({
         </div>
         <div>
           <h2 className="text-xl font-bold">{name}</h2>
-          <p className="text-sm">Followers: {followers}</p>
+          {email ? (
+            <p className="text-sm">Email: {email}</p>
+          ) : (
+            <p className="text-sm">Followers: {followers}</p>
+          )}
         </div>
       </div>
     );
@@ -53,7 +59,11 @@ export default function ArtistCard({
           <h2 className="text-3xl font-bold mb-2">{name}</h2>
           <p className="text-sm opacity-90">Popularity: {popularity}</p>
           <p className="text-sm opacity-90">Genres: {genres.join(", ")}</p>
-          <p className="text-sm opacity-90">Followers: {followers}</p>
+          {email ? (
+            <p className="text-sm opacity-90">Email: {email}</p>
+          ) : (
+            <p className="text-sm opacity-90">Followers: {followers}</p>
+          )}
         </div>
       </div>
     );
