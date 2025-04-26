@@ -1,0 +1,62 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Conventions de Style et Développement
+
+## Style de Code
+
+1. **TypeScript**
+   - Toujours définir les types explicitement
+   - Éviter `any` sauf cas exceptionnels
+   - Utiliser les interfaces pour les props des composants
+
+2. **React & Next.js**
+   - Préférer les composants fonctionnels
+   - Utiliser les hooks de manière appropriée
+   - Suivre les conventions de nommage React
+
+3. **CSS**
+   - Utiliser TailwindCSS pour le styling
+   - Suivre une approche mobile-first
+   - Maintenir une cohérence dans les classes utilisées
+
+## Qualité du Code
+
+1. **Tests**
+   - Écrire des tests pour les composants critiques
+   - Tester les cas d'erreur
+   - Maintenir une bonne couverture de tests
+
+2. **Performance**
+   - Optimiser les images avec next/image
+   - Utiliser la pagination quand nécessaire
+   - Implémenter le lazy loading approprié
+
+3. **Accessibilité**
+   - Suivre les standards WCAG
+   - Utiliser des attributs aria appropriés
+   - Assurer une navigation au clavier
+
+## Git
+
+1. **Conventions de Commit**
+   Chaque message de commit doit commencer par l'un des préfixes suivants :
+
+   - **ADD**: Pour l'ajout de nouvelles fonctionnalités
+     _Exemple_: `ADD user profile card with avatar`
+
+   - **UPD**: Pour la mise à jour ou le refactoring de code existant
+     _Exemple_: `UPD navbar layout to be responsive`
+
+   - **DEL**: Pour la suppression de code ou de fonctionnalités
+     _Exemple_: `DEL old authentication methods`
+
+   - **FIX**: Pour la correction de bugs ou problèmes
+     _Exemple_: `FIX Vercel deploy issue with dynamic routes`
+
+2. **Branches**
+   - feature/ pour les nouvelles fonctionnalités
+   - fix/ pour les corrections de bugs
+   - main comme branche principale
