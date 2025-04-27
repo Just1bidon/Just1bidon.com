@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import UserCard from "@/components/Card/UserCard";
 import LogoutButton from "@/components/ui/LogoutButton";
 import { Button } from "@/components/ui/button";
-import SpotifyTrackItem from "@/components/ui/SpotifyTrackItem";
 import Card from "@/components/Card/Card";
+import ExpandableCard from "@/components/Card/ExpandableCard";
+import type { CardData } from "@/components/Card/ExpandableCard";
+
 export default function SpotifyAuthBlock() {
   const { data: session, status } = useSession();
   const [tracks, setTracks] = useState<
@@ -17,6 +19,7 @@ export default function SpotifyAuthBlock() {
           images: { url: string }[];
         };
         artists: { name: string }[];
+        external_urls?: { spotify: string };
       };
     }[]
   >([]);
@@ -62,6 +65,38 @@ export default function SpotifyAuthBlock() {
     fetchTracks();
   }, [status, session]);
 
+  // Function to transform Spotify tracks into ExpandableCard data
+  const transformTracksToCards = (
+    tracks: {
+      track: {
+        id: string;
+        name: string;
+        album: {
+          images: { url: string }[];
+        };
+        artists: { name: string }[];
+        external_urls?: { spotify: string };
+      };
+    }[]
+  ): CardData[] => {
+    return tracks.map(({ track }) => ({
+      title: track.name,
+      description: track.artists.map((a) => a.name).join(", "),
+      src:
+        track.album.images[1]?.url ||
+        track.album.images[0]?.url ||
+        track.album.images[2]?.url ||
+        "",
+      ctaText: "Écouter",
+      ctaLink: track.external_urls?.spotify || "#",
+      content: () => (
+        <div>
+          <p>Artistes : {track.artists.map((a) => a.name).join(", ")}</p>
+        </div>
+      ),
+    }));
+  };
+
   if (status === "loading") return <p>Chargement...</p>;
 
   if (status === "authenticated")
@@ -84,28 +119,30 @@ export default function SpotifyAuthBlock() {
             <LogoutButton type="full" />
           </Card>
         </div>
-        <Card className="w-full">
-          <div className="w-full">
-            <h3 className="font-bold mb-2">
+        <Card className="w-full lg:px-8">
+          <div className="flex flex-col gap-1 mb-4">
+            <h3 className="font-bold text-xl">
               Vos 3 dernières musiques likées :
             </h3>
-            {loadingTracks && <p>Chargement des musiques...</p>}
-            {errorTracks && <p className="text-red-500">{errorTracks}</p>}
-            <ul>
-              {tracks.map((item) => (
-                <SpotifyTrackItem key={item.track.id} track={item.track} />
-              ))}
-            </ul>
             {showProof &&
               tracks.length === 3 &&
               !loadingTracks &&
               !errorTracks && (
-                <div className="mt-4 p-2 bg-green-100 text-green-800 rounded text-center text-sm">
-                  ✅ Si ces 3 musiques correspondent à votre compte, la
-                  connexion Spotify est parfaitement établie !
-                </div>
+                <p className="text-gray3 text-sm">
+                  Si ces 3 musiques correspondent à votre compte, la connexion
+                  Spotify est parfaitement établie !
+                </p>
               )}
           </div>
+
+          {loadingTracks && <p>Chargement des musiques...</p>}
+          {errorTracks && <p className="text-red-500">{errorTracks}</p>}
+          {tracks.length > 0 && !loadingTracks && !errorTracks && (
+            <ExpandableCard
+              cards={transformTracksToCards(tracks)}
+              variant="standard"
+            />
+          )}
         </Card>
       </section>
     );
