@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ArtistCardProps {
   image: string;
@@ -7,6 +8,7 @@ interface ArtistCardProps {
   genres: string[];
   followers: number;
   size?: "small" | "large";
+  email?: string;
 }
 
 export default function ArtistCard({
@@ -16,16 +18,24 @@ export default function ArtistCard({
   genres,
   followers,
   size = "small",
+  email,
 }: ArtistCardProps) {
   if (size === "small") {
     return (
-      <div className="flex gap-3 px-6 py-4 h-full rounded-lg border-1">
-        <div className="w-[50px] h-[50px] rounded-full overflow-hidden">
-          <Image src={image} alt={name} width={50} height={50} />
-        </div>
+      <div className="flex gap-3 px-4 py-2 h-full rounded-lg border-1">
+        <Avatar size="large">
+          <AvatarImage src={image} className="w-full h-full" />
+          <AvatarFallback className="w-full h-full text-2xl">
+            {name.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
         <div>
           <h2 className="text-xl font-bold">{name}</h2>
-          <p className="text-sm">Followers: {followers}</p>
+          {email ? (
+            <p className="text-sm">Email: {email}</p>
+          ) : (
+            <p className="text-sm">Followers: {followers}</p>
+          )}
         </div>
       </div>
     );
@@ -53,7 +63,11 @@ export default function ArtistCard({
           <h2 className="text-3xl font-bold mb-2">{name}</h2>
           <p className="text-sm opacity-90">Popularity: {popularity}</p>
           <p className="text-sm opacity-90">Genres: {genres.join(", ")}</p>
-          <p className="text-sm opacity-90">Followers: {followers}</p>
+          {email ? (
+            <p className="text-sm opacity-90">Email: {email}</p>
+          ) : (
+            <p className="text-sm opacity-90">Followers: {followers}</p>
+          )}
         </div>
       </div>
     );
