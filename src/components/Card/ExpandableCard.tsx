@@ -99,8 +99,8 @@ export default function ExpandableCard({
               </motion.div>
 
               <div>
-                <div className="flex justify-between items-start p-4">
-                  <div className="">
+                <div className="flex justify-between items-start p-4 gap-4">
+                  <div className="min-w-0">
                     <motion.h3
                       layoutId={`title-${active.title}-${id}`}
                       className="font-bold text-neutral-700 dark:text-neutral-200"
@@ -109,7 +109,7 @@ export default function ExpandableCard({
                     </motion.h3>
                     <motion.p
                       layoutId={`description-${active.description}-${id}`}
-                      className="text-neutral-600 dark:text-neutral-400"
+                      className="text-neutral-600 dark:text-neutral-400 line-clamp-2"
                     >
                       {active.description}
                     </motion.p>
@@ -119,7 +119,7 @@ export default function ExpandableCard({
                     layoutId={`button-${active.title}-${id}`}
                     href={active.ctaLink}
                     target="_blank"
-                    className="px-4 py-3 text-sm rounded-full font-bold bg-green-500 text-white"
+                    className="px-4 py-3 text-sm rounded-full font-bold bg-green-500 text-white min-w-[120px] text-center"
                   >
                     {active.ctaText}
                   </motion.a>
@@ -172,7 +172,7 @@ export default function ExpandableCard({
                   </motion.h3>
                   <motion.p
                     layoutId={`description-${card.description}-${id}`}
-                    className="text-neutral-600 dark:text-neutral-400 text-center md:text-left text-base"
+                    className="text-neutral-600 dark:text-neutral-400 text-center md:text-left line-clamp-2"
                   >
                     {card.description}
                   </motion.p>
@@ -191,17 +191,17 @@ export default function ExpandableCard({
               onClick={() => setActive(card)}
               className="p-4 flex flex-col md:flex-row justify-between items-center hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl cursor-pointer"
             >
-              <div className="flex gap-4 flex-col md:flex-row">
+              <div className="flex gap-4 flex-col md:flex-row flex-1 items-center md:items-start">
                 <motion.div layoutId={`image-${card.title}-${id}`}>
                   <Image
-                    width={100}
-                    height={100}
+                    width={64}
+                    height={64}
                     src={card.src}
                     alt={card.title}
-                    className="h-40 w-40 md:h-14 md:w-14 rounded-lg object-cover object-top"
+                    className="h-16 w-16 rounded-lg object-cover object-top"
                   />
                 </motion.div>
-                <div className="">
+                <div className="flex-1 min-w-0">
                   <motion.h3
                     layoutId={`title-${card.title}-${id}`}
                     className="font-medium text-neutral-800 dark:text-neutral-200 text-center md:text-left"
@@ -210,7 +210,7 @@ export default function ExpandableCard({
                   </motion.h3>
                   <motion.p
                     layoutId={`description-${card.description}-${id}`}
-                    className="text-neutral-600 dark:text-neutral-400 text-center md:text-left"
+                    className="text-neutral-600 dark:text-neutral-400 text-center md:text-left line-clamp-1"
                   >
                     {card.description}
                   </motion.p>
@@ -218,7 +218,8 @@ export default function ExpandableCard({
               </div>
               <motion.button
                 layoutId={`button-${card.title}-${id}`}
-                className="px-4 py-2 text-sm rounded-full font-bold bg-gray-100 hover:bg-green-500 hover:text-white text-black mt-4 md:mt-0"
+                className="px-4 py-2 text-sm rounded-full font-bold bg-gray-100 hover:bg-green-500 hover:text-white text-black mt-4 md:mt-0 shrink-0"
+                style={{ minWidth: 120 }}
               >
                 {card.ctaText}
               </motion.button>
