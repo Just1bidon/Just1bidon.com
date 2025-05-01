@@ -1,0 +1,40 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Structure du Projet Just1bidon.com
+
+Ce projet est une application web Next.js utilisant TypeScript. Voici les principaux répertoires et fichiers :
+
+## Structure des Répertoires
+
+- `src/` : Contient le code source principal de l'application
+- `.next/` : Contient les fichiers de build générés par Next.js
+- `public/` : Ressources statiques accessibles publiquement
+- `node_modules/` : Dépendances du projet
+
+## Fichiers de Configuration Principaux
+
+- [next.config.ts](mdc:next.config.ts) : Configuration de Next.js
+- [tsconfig.json](mdc:tsconfig.json) : Configuration TypeScript
+- [package.json](mdc:package.json) : Dépendances et scripts npm
+- [components.json](mdc:components.json) : Configuration des composants
+- [postcss.config.mjs](mdc:postcss.config.mjs) : Configuration PostCSS
+- [eslint.config.mjs](mdc:eslint.config.mjs) : Configuration ESLint
+
+## Bibliothèques UI
+
+Le projet utilise deux bibliothèques de composants principales :
+
+- **[ShadCN UI](mdc:https:/ui.shadcn.dev)** – Une bibliothèque de composants personnalisables construite sur Tailwind CSS et Radix UI
+- **[Acernity UI](mdc:https:/www.acernity-ui.com)** – Un kit UI moderne pour créer des applications React élégantes et accessibles
+
+Pour l'utilisation de ces bibliothèques, se référer à leurs documentations officielles respectives.
+
+## Conventions de Développement
+
+1. Utiliser TypeScript pour tout nouveau code
+2. Suivre les conventions ESLint configurées
+3. Organiser les composants de manière modulaire
+4. Utiliser les hooks React de manière appropriée
