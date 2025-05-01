@@ -159,12 +159,16 @@ export default function ExpandableCard({
             >
               <motion.div layoutId={`image-${active.title}-${id}`}>
                 {active.url && !imgErrors[active.url] ? (
-                  <img
-                    src={getThumioUrl(active.url)}
-                    alt={active.title}
-                    className="w-full h-80 lg:h-80 sm:rounded-tr-lg sm:rounded-tl-lg object-cover object-top"
-                    onError={() => handleImageError(active.url as string)}
-                  />
+                  <div className="relative w-full h-80">
+                    <Image
+                      src={getThumioUrl(active.url)}
+                      alt={active.title}
+                      fill
+                      className="object-cover object-top"
+                      onError={() => handleImageError(active.url as string)}
+                      unoptimized
+                    />
+                  </div>
                 ) : (
                   <Image
                     width={400}
@@ -252,12 +256,16 @@ export default function ExpandableCard({
                   className="w-full aspect-[6/4] relative"
                 >
                   {card.url && !imgErrors[card.url] ? (
-                    <img
-                      src={getThumioUrl(card.url)}
-                      alt={card.title}
-                      className="w-full h-full rounded-lg object-cover object-top"
-                      onError={() => handleImageError(card.url as string)}
-                    />
+                    <div className="relative w-full h-full">
+                      <Image
+                        src={getThumioUrl(card.url)}
+                        alt={card.title}
+                        fill
+                        className="object-cover object-top rounded-lg"
+                        onError={() => handleImageError(card.url as string)}
+                        unoptimized
+                      />
+                    </div>
                   ) : (
                     <Image
                       width={400}
@@ -305,11 +313,16 @@ export default function ExpandableCard({
                     </motion.p>
                   </div>
                   {card.url && linkPreviews[card.url]?.favicon && (
-                    <img
-                      src={linkPreviews[card.url].favicon || FALLBACK_FAVICON}
-                      alt="favicon"
-                      className="w-8 h-8 rounded-full object-cover shadow-sm"
-                    />
+                    <div className="relative w-8 h-8 shrink-0">
+                      <Image
+                        src={linkPreviews[card.url].favicon || FALLBACK_FAVICON}
+                        alt="favicon"
+                        width={32}
+                        height={32}
+                        className="rounded-full object-cover shadow-sm"
+                        unoptimized
+                      />
+                    </div>
                   )}
                 </div>
               </div>
@@ -329,11 +342,16 @@ export default function ExpandableCard({
               <div className="flex gap-4 flex-col md:flex-row flex-1 items-center md:items-start">
                 <motion.div layoutId={`image-${card.title}-${id}`}>
                   {card.url && linkPreviews[card.url]?.favicon ? (
-                    <img
-                      src={linkPreviews[card.url].favicon || FALLBACK_FAVICON}
-                      alt={card.title}
-                      className="h-16 w-16 rounded-lg object-cover object-center bg-white"
-                    />
+                    <div className="relative w-16 h-16">
+                      <Image
+                        src={linkPreviews[card.url].favicon || FALLBACK_FAVICON}
+                        alt={card.title}
+                        width={64}
+                        height={64}
+                        className="rounded-lg object-cover object-center bg-white"
+                        unoptimized
+                      />
+                    </div>
                   ) : (
                     <Image
                       width={64}
@@ -440,8 +458,8 @@ export const cardExemple = [
     content: () => (
       <>
         <p>
-          Le Projet 'Projet Voltaire-inator' est un projet qui permet de savoir
-          si vous êtes un projet Voltaire ou non.
+          Le Projet &apos;Projet Voltaire-inator&apos; est un projet qui permet
+          de savoir si vous êtes un projet Voltaire ou non.
         </p>
         <p>Contenu du projet</p>
       </>

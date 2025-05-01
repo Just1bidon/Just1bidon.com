@@ -14,12 +14,12 @@ export default function Home() {
       content: (
         <>
           <p>
-            Le Projet 'Projet Voltaire-inator' est un projet qui permet de
-            savoir si vous êtes un projet Voltaire ou non.
+            Le Projet &apos;Projet Voltaire-inator&apos; est un projet qui
+            permet de savoir si vous êtes un projet Voltaire ou non.
           </p>
           <p>
-            Il s'agit d'une extension pour navigateur qui facilite l'utilisation
-            de Projet Voltaire.
+            Il s&apos;agit d&apos;une extension pour navigateur qui facilite
+            l&apos;utilisation de Projet Voltaire.
           </p>
         </>
       ),
@@ -53,8 +53,8 @@ export default function Home() {
       content: (
         <>
           <p>
-            Ce projet n'a pas d'URL externe, donc il utilise l'image et le titre
-            définis manuellement.
+            Ce projet n&apos;a pas d&apos;URL externe, donc il utilise
+            l&apos;image et le titre définis manuellement.
           </p>
           <p>La description est affichée directement, sans lien cliquable.</p>
         </>
@@ -69,7 +69,7 @@ export default function Home() {
       content: (
         <>
           <p>Voici un autre exemple de projet sans URL externe.</p>
-          <p>Il utilise l'image et le titre définis manuellement.</p>
+          <p>Il utilise l&apos;image et le titre définis manuellement.</p>
         </>
       ),
     },
@@ -87,7 +87,7 @@ export default function Home() {
             ExpandableCard Standard avec preview de lien :
           </h3>
           <p className="text-gray-600">
-            Version standard où l'image est remplacée par le favicon et la
+            Version standard où l&apos;image est remplacée par le favicon et la
             description par le lien du site
           </p>
           <ExpandableCard cards={projectsWithUrl} variant="standard" />
@@ -110,8 +110,8 @@ export default function Home() {
             ExpandableCard Grid avec preview de lien :
           </h3>
           <p className="text-gray-600">
-            Version grid où l'image est remplacée par un screenshot du site via
-            thum.io
+            Version grid où l&apos;image est remplacée par un screenshot du site
+            via thum.io
           </p>
           <ExpandableCard cards={projectsWithUrl} variant="grid" />
         </div>
