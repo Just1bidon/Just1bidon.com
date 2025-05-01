@@ -12,20 +12,84 @@ export type CardData = {
   ctaText: string;
   ctaLink: string;
   content: React.ReactNode | (() => React.ReactNode);
+  url?: string; // URL optionnelle pour la preview de lien
 };
+
+// Type pour les données de preview de lien
+interface LinkPreviewData {
+  title: string | null;
+  favicon: string | null;
+  hostname: string | null;
+}
 
 interface ExpandableCardProps {
   cards: CardData[];
   variant?: "standard" | "grid";
 }
 
+const FALLBACK_FAVICON = "/Just1bidon_head/Just1bidon_head.jpg"; // à placer dans public/
+const FALLBACK_IMAGE = "/Just1bidon_head/Just1bidon_head.jpg"; // à placer dans public/
+
 export default function ExpandableCard({
   cards,
   variant = "standard",
 }: ExpandableCardProps) {
   const [active, setActive] = useState<CardData | boolean | null>(null);
+  const [linkPreviews, setLinkPreviews] = useState<
+    Record<string, LinkPreviewData>
+  >({});
+  const [loadingPreviews, setLoadingPreviews] = useState<
+    Record<string, boolean>
+  >({});
+  const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
+
+  // Récupérer les previews pour les cartes qui ont une URL
+  useEffect(() => {
+    const cardsWithUrls = cards.filter((card) => card.url);
+    if (cardsWithUrls.length === 0) return;
+
+    // Initialiser les états de chargement
+    const initialLoadingState: Record<string, boolean> = {};
+    cardsWithUrls.forEach((card) => {
+      if (card.url) initialLoadingState[card.url] = true;
+    });
+    setLoadingPreviews(initialLoadingState);
+
+    // Récupérer les données pour chaque URL
+    cardsWithUrls.forEach((card) => {
+      if (!card.url) return;
+
+      fetch(`/api/link-preview?url=${encodeURIComponent(card.url)}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Erreur API");
+          return res.json();
+        })
+        .then((data) => {
+          setLinkPreviews((prev) => ({
+            ...prev,
+            [card.url as string]: data,
+          }));
+        })
+        .catch((err) => {
+          console.error("Erreur lors de la récupération de la preview:", err);
+        })
+        .finally(() => {
+          setLoadingPreviews((prev) => ({
+            ...prev,
+            [card.url as string]: false,
+          }));
+        });
+    });
+  }, [cards]);
+
+  const handleImageError = (url: string) => {
+    setImgErrors((prev) => ({
+      ...prev,
+      [url]: true,
+    }));
+  };
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -47,6 +111,11 @@ export default function ExpandableCard({
   useOutsideClick(ref as React.RefObject<HTMLDivElement>, () =>
     setActive(null)
   );
+
+  // Construire l'URL thum.io
+  const getThumioUrl = (url: string) => {
+    return `https://image.thum.io/get/${encodeURIComponent(url)}`;
+  };
 
   return (
     <>
@@ -89,13 +158,22 @@ export default function ExpandableCard({
               className="w-full max-w-[500px] h-full md:h-fit md:max-h-[90%] flex flex-col bg-white dark:bg-neutral-900 sm:rounded-3xl overflow-hidden"
             >
               <motion.div layoutId={`image-${active.title}-${id}`}>
-                <Image
-                  width={400}
-                  height={300}
-                  src={active.src}
-                  alt={active.title}
-                  className="w-full h-80 lg:h-80 sm:rounded-tr-lg sm:rounded-tl-lg object-cover object-top"
-                />
+                {active.url && !imgErrors[active.url] ? (
+                  <img
+                    src={getThumioUrl(active.url)}
+                    alt={active.title}
+                    className="w-full h-80 lg:h-80 sm:rounded-tr-lg sm:rounded-tl-lg object-cover object-top"
+                    onError={() => handleImageError(active.url as string)}
+                  />
+                ) : (
+                  <Image
+                    width={400}
+                    height={300}
+                    src={active.src}
+                    alt={active.title}
+                    className="w-full h-80 lg:h-80 sm:rounded-tr-lg sm:rounded-tl-lg object-cover object-top"
+                  />
+                )}
               </motion.div>
 
               <div>
@@ -105,13 +183,28 @@ export default function ExpandableCard({
                       layoutId={`title-${active.title}-${id}`}
                       className="font-bold text-neutral-700 dark:text-neutral-200"
                     >
-                      {active.title}
+                      {active.url && linkPreviews[active.url]?.title
+                        ? linkPreviews[active.url].title
+                        : active.title}
                     </motion.h3>
                     <motion.p
                       layoutId={`description-${active.description}-${id}`}
                       className="text-neutral-600 dark:text-neutral-400 line-clamp-2"
                     >
-                      {active.description}
+                      {active.url ? (
+                        <a
+                          href={active.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-500 hover:text-gray-700 underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {linkPreviews[active.url]?.hostname ||
+                            active.url.replace(/^https?:\/\//, "")}
+                        </a>
+                      ) : (
+                        active.description
+                      )}
                     </motion.p>
                   </div>
 
@@ -154,28 +247,70 @@ export default function ExpandableCard({
               className="p-4 flex flex-col hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl cursor-pointer"
             >
               <div className="flex gap-4 flex-col w-full">
-                <motion.div layoutId={`image-${card.title}-${id}`}>
-                  <Image
-                    width={400}
-                    height={300}
-                    src={card.src}
-                    alt={card.title}
-                    className="h-60 w-full rounded-lg object-cover object-top"
-                  />
+                <motion.div
+                  layoutId={`image-${card.title}-${id}`}
+                  className="w-full aspect-[6/4] relative"
+                >
+                  {card.url && !imgErrors[card.url] ? (
+                    <img
+                      src={getThumioUrl(card.url)}
+                      alt={card.title}
+                      className="w-full h-full rounded-lg object-cover object-top"
+                      onError={() => handleImageError(card.url as string)}
+                    />
+                  ) : (
+                    <Image
+                      width={400}
+                      height={300}
+                      src={card.src}
+                      alt={card.title}
+                      className="w-full h-full rounded-lg object-cover object-top"
+                    />
+                  )}
                 </motion.div>
-                <div className="flex justify-center items-center flex-col">
-                  <motion.h3
-                    layoutId={`title-${card.title}-${id}`}
-                    className="font-medium text-neutral-800 dark:text-neutral-200 text-center md:text-left text-base"
-                  >
-                    {card.title}
-                  </motion.h3>
-                  <motion.p
-                    layoutId={`description-${card.description}-${id}`}
-                    className="text-neutral-600 dark:text-neutral-400 text-center md:text-left line-clamp-2"
-                  >
-                    {card.description}
-                  </motion.p>
+                <div className="flex justify-between items-start w-full">
+                  <div className="flex flex-col">
+                    <motion.h3
+                      layoutId={`title-${card.title}-${id}`}
+                      className="font-medium text-neutral-800 dark:text-neutral-200 text-left text-base"
+                    >
+                      {card.url && linkPreviews[card.url]?.title
+                        ? linkPreviews[card.url].title
+                        : card.title}
+                    </motion.h3>
+                    <motion.p
+                      layoutId={`description-${card.description}-${id}`}
+                      className="text-neutral-600 dark:text-neutral-400 text-left line-clamp-2"
+                    >
+                      {card.url ? (
+                        loadingPreviews[card.url] ? (
+                          <span className="text-gray-400">
+                            Chargement du lien...
+                          </span>
+                        ) : (
+                          <a
+                            href={card.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-gray-500 hover:text-gray-700 underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {linkPreviews[card.url]?.hostname ||
+                              card.url.replace(/^https?:\/\//, "")}
+                          </a>
+                        )
+                      ) : (
+                        card.description
+                      )}
+                    </motion.p>
+                  </div>
+                  {card.url && linkPreviews[card.url]?.favicon && (
+                    <img
+                      src={linkPreviews[card.url].favicon || FALLBACK_FAVICON}
+                      alt="favicon"
+                      className="w-8 h-8 rounded-full object-cover shadow-sm"
+                    />
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -193,26 +328,55 @@ export default function ExpandableCard({
             >
               <div className="flex gap-4 flex-col md:flex-row flex-1 items-center md:items-start">
                 <motion.div layoutId={`image-${card.title}-${id}`}>
-                  <Image
-                    width={64}
-                    height={64}
-                    src={card.src}
-                    alt={card.title}
-                    className="h-16 w-16 rounded-lg object-cover object-top"
-                  />
+                  {card.url && linkPreviews[card.url]?.favicon ? (
+                    <img
+                      src={linkPreviews[card.url].favicon || FALLBACK_FAVICON}
+                      alt={card.title}
+                      className="h-16 w-16 rounded-lg object-cover object-center bg-white"
+                    />
+                  ) : (
+                    <Image
+                      width={64}
+                      height={64}
+                      src={card.src}
+                      alt={card.title}
+                      className="h-16 w-16 rounded-lg object-cover object-top"
+                    />
+                  )}
                 </motion.div>
                 <div className="flex-1 min-w-0">
                   <motion.h3
                     layoutId={`title-${card.title}-${id}`}
                     className="font-medium text-neutral-800 dark:text-neutral-200 text-center md:text-left"
                   >
-                    {card.title}
+                    {card.url && linkPreviews[card.url]?.title
+                      ? linkPreviews[card.url].title
+                      : card.title}
                   </motion.h3>
                   <motion.p
                     layoutId={`description-${card.description}-${id}`}
                     className="text-neutral-600 dark:text-neutral-400 text-center md:text-left line-clamp-1"
                   >
-                    {card.description}
+                    {card.url ? (
+                      loadingPreviews[card.url] ? (
+                        <span className="text-gray-400">
+                          Chargement du lien...
+                        </span>
+                      ) : (
+                        <a
+                          href={card.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-500 hover:text-gray-700 underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {linkPreviews[card.url]?.hostname ||
+                            card.url.replace(/^https?:\/\//, "")}
+                        </a>
+                      )
+                    ) : (
+                      card.description
+                    )}
                   </motion.p>
                 </div>
               </div>
@@ -263,3 +427,25 @@ export const CloseIcon = () => {
     </motion.svg>
   );
 };
+
+// Exemple d'utilisation
+export const cardExemple = [
+  {
+    title: "Projet Voltaire-inator",
+    description: "Extension pour Projet Voltaire",
+    src: "/Just1bidon_head/Just1bidon_head.jpg",
+    ctaText: "Voir le projet",
+    ctaLink: "https://www.projet-voltaire-inator.fr/",
+    url: "https://www.projet-voltaire-inator.fr/",
+    content: () => (
+      <>
+        <p>
+          Le Projet 'Projet Voltaire-inator' est un projet qui permet de savoir
+          si vous êtes un projet Voltaire ou non.
+        </p>
+        <p>Contenu du projet</p>
+      </>
+    ),
+  },
+  // ...autres cartes
+];
