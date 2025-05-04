@@ -45,6 +45,53 @@ export default function ExpandableCard({
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
 
+  // Taille unique pour toutes les previews (plus grande)
+  const PREVIEW_WIDTH = 800;
+  const PREVIEW_HEIGHT = 520;
+  const [screenshotCache, setScreenshotCache] = useState<
+    Record<string, string>
+  >({});
+  const [imageBlobCache, setImageBlobCache] = useState<Record<string, string>>(
+    {}
+  );
+
+  const getOrCreateScreenshotUrl = (url: string) => {
+    const cacheKey = `${url}|${PREVIEW_WIDTH}|${PREVIEW_HEIGHT}`;
+    if (screenshotCache[cacheKey]) return screenshotCache[cacheKey];
+    const params = new URLSearchParams({
+      url,
+      width: PREVIEW_WIDTH.toString(),
+      height: PREVIEW_HEIGHT.toString(),
+      format: "jpeg",
+    });
+    const apiUrl = `http://46.202.131.91:3000/screenshot?${params.toString()}`;
+    setScreenshotCache((prev) => ({ ...prev, [cacheKey]: apiUrl }));
+    return apiUrl;
+  };
+
+  // Fonction pour charger et cacher l'image blob
+  const fetchAndCacheScreenshot = async (url: string) => {
+    const cacheKey = `${url}|${PREVIEW_WIDTH}|${PREVIEW_HEIGHT}`;
+    if (imageBlobCache[cacheKey]) return imageBlobCache[cacheKey];
+    const params = new URLSearchParams({
+      url,
+      width: PREVIEW_WIDTH.toString(),
+      height: PREVIEW_HEIGHT.toString(),
+      format: "jpeg",
+    });
+    const apiUrl = `http://46.202.131.91:3000/screenshot?${params.toString()}`;
+    try {
+      const res = await fetch(apiUrl);
+      if (!res.ok) throw new Error("Erreur lors du chargement du screenshot");
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      setImageBlobCache((prev) => ({ ...prev, [cacheKey]: blobUrl }));
+      return blobUrl;
+    } catch (e) {
+      return apiUrl; // fallback sur l'URL API si erreur
+    }
+  };
+
   // Récupérer les previews pour les cartes qui ont une URL
   useEffect(() => {
     const cardsWithUrls = cards.filter((card) => card.url);
@@ -84,6 +131,17 @@ export default function ExpandableCard({
     });
   }, [cards]);
 
+  // Précharger les images des cartes avec une URL
+  useEffect(() => {
+    const cardsWithUrls = cards.filter((card) => card.url);
+    cardsWithUrls.forEach((card) => {
+      const cacheKey = `${card.url}|${PREVIEW_WIDTH}|${PREVIEW_HEIGHT}`;
+      if (!imageBlobCache[cacheKey]) {
+        fetchAndCacheScreenshot(card.url!);
+      }
+    });
+  }, [cards]);
+
   const handleImageError = (url: string) => {
     setImgErrors((prev) => ({
       ...prev,
@@ -111,11 +169,6 @@ export default function ExpandableCard({
   useOutsideClick(ref as React.RefObject<HTMLDivElement>, () =>
     setActive(null)
   );
-
-  // Construire l'URL thum.io
-  const getThumioUrl = (url: string) => {
-    return `https://image.thum.io/get/${encodeURIComponent(url)}`;
-  };
 
   return (
     <>
@@ -159,9 +212,18 @@ export default function ExpandableCard({
             >
               <motion.div layoutId={`image-${active.title}-${id}`}>
                 {active.url && !imgErrors[active.url] ? (
-                  <div className="relative w-full h-80">
+                  <div
+                    className="relative w-full"
+                    style={{
+                      aspectRatio: `${PREVIEW_WIDTH}/${PREVIEW_HEIGHT}`,
+                    }}
+                  >
                     <Image
-                      src={getThumioUrl(active.url)}
+                      src={
+                        imageBlobCache[
+                          `${active.url}|${PREVIEW_WIDTH}|${PREVIEW_HEIGHT}`
+                        ] || getOrCreateScreenshotUrl(active.url)
+                      }
                       alt={active.title}
                       fill
                       className="object-cover object-top"
@@ -171,11 +233,11 @@ export default function ExpandableCard({
                   </div>
                 ) : (
                   <Image
-                    width={400}
-                    height={300}
+                    width={PREVIEW_WIDTH}
+                    height={PREVIEW_HEIGHT}
                     src={active.src}
                     alt={active.title}
-                    className="w-full h-80 lg:h-80 sm:rounded-tr-lg sm:rounded-tl-lg object-cover object-top"
+                    className="w-full object-cover object-top"
                   />
                 )}
               </motion.div>
@@ -256,9 +318,18 @@ export default function ExpandableCard({
                   className="w-full aspect-[6/4] relative"
                 >
                   {card.url && !imgErrors[card.url] ? (
-                    <div className="relative w-full h-full">
+                    <div
+                      className="relative w-full"
+                      style={{
+                        aspectRatio: `${PREVIEW_WIDTH}/${PREVIEW_HEIGHT}`,
+                      }}
+                    >
                       <Image
-                        src={getThumioUrl(card.url)}
+                        src={
+                          imageBlobCache[
+                            `${card.url}|${PREVIEW_WIDTH}|${PREVIEW_HEIGHT}`
+                          ] || getOrCreateScreenshotUrl(card.url)
+                        }
                         alt={card.title}
                         fill
                         className="object-cover object-top rounded-lg"
@@ -268,11 +339,11 @@ export default function ExpandableCard({
                     </div>
                   ) : (
                     <Image
-                      width={400}
-                      height={300}
+                      width={PREVIEW_WIDTH}
+                      height={PREVIEW_HEIGHT}
                       src={card.src}
                       alt={card.title}
-                      className="w-full h-full rounded-lg object-cover object-top"
+                      className="w-full rounded-lg object-cover object-top"
                     />
                   )}
                 </motion.div>
