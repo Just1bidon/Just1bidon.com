@@ -112,9 +112,13 @@ export default function ExpandableCard({
     setActive(null)
   );
 
-  // Construire l'URL thum.io
-  const getThumioUrl = (url: string) => {
-    return `https://image.thum.io/get/${encodeURIComponent(url)}`;
+  // Construire l'URL PhantomJsCloud avec clé d'API
+  const phantomKey = process.env.NEXT_PUBLIC_PHANTOMJS_KEY;
+  const getPhantomJsCloudUrl = (url: string) => {
+    if (!phantomKey) return "";
+    return `https://phantomjscloud.com/api/browser/v2/${phantomKey}/?request=${encodeURIComponent(
+      JSON.stringify({ url, renderType: "png", outputAsJson: false })
+    )}`;
   };
 
   return (
@@ -161,7 +165,7 @@ export default function ExpandableCard({
                 {active.url && !imgErrors[active.url] ? (
                   <div className="relative w-full h-80">
                     <Image
-                      src={getThumioUrl(active.url)}
+                      src={getPhantomJsCloudUrl(active.url)}
                       alt={active.title}
                       fill
                       className="object-cover object-top"
@@ -258,7 +262,7 @@ export default function ExpandableCard({
                   {card.url && !imgErrors[card.url] ? (
                     <div className="relative w-full h-full">
                       <Image
-                        src={getThumioUrl(card.url)}
+                        src={getPhantomJsCloudUrl(card.url)}
                         alt={card.title}
                         fill
                         className="object-cover object-top rounded-lg"

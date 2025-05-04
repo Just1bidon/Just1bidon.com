@@ -25,15 +25,15 @@ export default function Home() {
       ),
     },
     {
-      title: "Just1bidon.com",
+      title: "Studio Mazzetta",
       description: "Mon site personnel",
       src: "/Just1bidon_head/Just1bidon_head.jpg",
       ctaText: "Visiter",
-      ctaLink: "https://www.just1bidon.com/",
-      url: "https://www.just1bidon.com/", // URL pour preview
+      ctaLink: "https://www.github.com",
+      url: "https://www.github.com", // URL pour preview
       content: (
         <>
-          <p>
+          <p> 
             Just1bidon.com est mon site personnel où je partage mes projets et
             mon portfolio.
           </p>
