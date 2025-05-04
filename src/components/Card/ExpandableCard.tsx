@@ -64,7 +64,7 @@ export default function ExpandableCard({
       height: PREVIEW_HEIGHT.toString(),
       format: "jpeg",
     });
-    const apiUrl = `http://46.202.131.91:3000/screenshot?${params.toString()}`;
+    const apiUrl = `/api/proxy-screenshot?${params.toString()}`;
     setScreenshotCache((prev) => ({ ...prev, [cacheKey]: apiUrl }));
     return apiUrl;
   };
@@ -79,7 +79,7 @@ export default function ExpandableCard({
       height: PREVIEW_HEIGHT.toString(),
       format: "jpeg",
     });
-    const apiUrl = `http://46.202.131.91:3000/screenshot?${params.toString()}`;
+    const apiUrl = `/api/proxy-screenshot?${params.toString()}`;
     try {
       const res = await fetch(apiUrl);
       if (!res.ok) throw new Error("Erreur lors du chargement du screenshot");
@@ -88,7 +88,7 @@ export default function ExpandableCard({
       setImageBlobCache((prev) => ({ ...prev, [cacheKey]: blobUrl }));
       return blobUrl;
     } catch (e) {
-      return apiUrl; // fallback sur l'URL API si erreur
+      return apiUrl; // fallback sur l'URL proxy si erreur
     }
   };
 
