@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import puppeteer from "puppeteer";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -14,29 +15,74 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const apiUrl = `http://46.202.131.91:3000/screenshot?url=${encodeURIComponent(url)}&width=${width}&height=${height}&format=${format}`;
-
+  let browser;
   try {
-    const apiRes = await fetch(apiUrl);
-    if (!apiRes.ok) {
-      return new Response(JSON.stringify({ error: "API error" }), {
-        status: apiRes.status,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-    const contentType = apiRes.headers.get("content-type") || "image/jpeg";
-    const buffer = await apiRes.arrayBuffer();
-    return new Response(buffer, {
+    console.log(`[PROXY-SCREENSHOT] Démarrage du screenshot pour: ${url}`);
+    
+    // Lancer le navigateur
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu'
+      ]
+    });
+
+    const page = await browser.newPage();
+    
+    // Configurer la taille de la fenêtre
+    await page.setViewport({
+      width: parseInt(width),
+      height: parseInt(height),
+      deviceScaleFactor: 1,
+    });
+
+    // Aller sur la page avec un timeout
+    await page.goto(url, { 
+      waitUntil: 'networkidle2',
+      timeout: 10000 
+    });
+
+    // Prendre le screenshot
+    const screenshot = await page.screenshot({
+      type: format as 'png' | 'jpeg',
+      quality: format === 'jpeg' ? 80 : undefined,
+      fullPage: false
+    });
+
+    console.log(`[PROXY-SCREENSHOT] Screenshot réussi pour: ${url}`);
+
+    return new Response(screenshot, {
       status: 200,
       headers: {
-        "Content-Type": contentType,
+        "Content-Type": `image/${format}`,
         "Cache-Control": "public, max-age=86400",
       },
     });
+
   } catch (e) {
-    return new Response(JSON.stringify({ error: "Proxy error" }), {
+    console.error(`[PROXY-SCREENSHOT] Erreur pour ${url}:`, e);
+    
+    let errorMessage = "Screenshot error";
+    if (e instanceof Error) {
+      errorMessage = e.message;
+    }
+    
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      details: e instanceof Error ? e.message : "Unknown error"
+    }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 } 
