@@ -29,8 +29,8 @@ export default function Home() {
       description: "Mon site personnel",
       src: "/Just1bidon_head/Just1bidon_head.jpg",
       ctaText: "Visiter",
-      ctaLink: "https://www.github.com",
-      url: "https://www.github.com", // URL pour preview
+      ctaLink: "https://github.com",
+      url: "https://github.com", // URL pour preview
       content: (
         <>
           <p> 

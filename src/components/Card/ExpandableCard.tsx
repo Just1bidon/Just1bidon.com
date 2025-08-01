@@ -70,25 +70,63 @@ export default function ExpandableCard({
   };
 
   // Fonction pour charger et cacher l'image blob
-  const fetchAndCacheScreenshot = async (url: string) => {
+  const fetchAndCacheScreenshot = async (url: string, forceRefresh = false) => {
     const cacheKey = `${url}|${PREVIEW_WIDTH}|${PREVIEW_HEIGHT}`;
-    if (imageBlobCache[cacheKey]) return imageBlobCache[cacheKey];
+    if (imageBlobCache[cacheKey] && !forceRefresh)
+      return imageBlobCache[cacheKey];
+
     const params = new URLSearchParams({
       url,
       width: PREVIEW_WIDTH.toString(),
       height: PREVIEW_HEIGHT.toString(),
       format: "jpeg",
     });
+
+    // Ajouter le paramètre force si demandé (utilise la nouvelle fonctionnalité de l'API)
+    if (forceRefresh) {
+      params.set("force", "true");
+    }
+
     const apiUrl = `/api/proxy-screenshot?${params.toString()}`;
     try {
       const res = await fetch(apiUrl);
-      if (!res.ok) throw new Error("Erreur lors du chargement du screenshot");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error("Erreur screenshot API:", res.status, errorData);
+
+        // Gestion spécifique des erreurs 504/503 (service indisponible)
+        if (res.status === 504 || res.status === 503) {
+          console.warn(
+            `Service screenshot temporairement indisponible pour ${url}`
+          );
+          // Retourner null pour indiquer qu'aucune image n'est disponible
+          return null;
+        }
+
+        throw new Error(
+          errorData.error ||
+            `Erreur ${res.status} lors du chargement du screenshot`
+        );
+      }
       const blob = await res.blob();
       const blobUrl = URL.createObjectURL(blob);
       setImageBlobCache((prev) => ({ ...prev, [cacheKey]: blobUrl }));
       return blobUrl;
     } catch (e) {
-      return apiUrl; // fallback sur l'URL proxy si erreur
+      console.error("Erreur fetchAndCacheScreenshot:", e);
+      // En cas d'erreur réseau ou de timeout, retourner null
+      return null;
+    }
+  };
+
+  // Fonction pour rafraîchir un screenshot spécifique
+  const refreshScreenshot = async (url: string) => {
+    try {
+      setImgErrors((prev) => ({ ...prev, [url]: false }));
+      await fetchAndCacheScreenshot(url, true); // Force le refresh
+    } catch (e) {
+      console.error("Erreur lors du refresh du screenshot:", e);
+      setImgErrors((prev) => ({ ...prev, [url]: true }));
     }
   };
 
@@ -134,10 +172,14 @@ export default function ExpandableCard({
   // Précharger les images des cartes avec une URL
   useEffect(() => {
     const cardsWithUrls = cards.filter((card) => card.url);
-    cardsWithUrls.forEach((card) => {
+    cardsWithUrls.forEach(async (card) => {
       const cacheKey = `${card.url}|${PREVIEW_WIDTH}|${PREVIEW_HEIGHT}`;
       if (!imageBlobCache[cacheKey]) {
-        fetchAndCacheScreenshot(card.url!);
+        const result = await fetchAndCacheScreenshot(card.url!);
+        // Si le service de screenshot n'est pas disponible, marquer comme erreur
+        if (result === null) {
+          setImgErrors((prev) => ({ ...prev, [card.url!]: true }));
+        }
       }
     });
   }, [cards]);
@@ -213,7 +255,7 @@ export default function ExpandableCard({
               <motion.div layoutId={`image-${active.title}-${id}`}>
                 {active.url && !imgErrors[active.url] ? (
                   <div
-                    className="relative w-full"
+                    className="relative w-full group"
                     style={{
                       aspectRatio: `${PREVIEW_WIDTH}/${PREVIEW_HEIGHT}`,
                     }}
@@ -230,6 +272,49 @@ export default function ExpandableCard({
                       onError={() => handleImageError(active.url as string)}
                       unoptimized
                     />
+                    {/* Bouton de rafraîchissement (visible au survol) */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        refreshScreenshot(active.url!);
+                      }}
+                      className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      title="Rafraîchir le screenshot"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ) : active.url && imgErrors[active.url] ? (
+                  <div
+                    className="relative w-full bg-gray-100 flex flex-col items-center justify-center"
+                    style={{
+                      aspectRatio: `${PREVIEW_WIDTH}/${PREVIEW_HEIGHT}`,
+                    }}
+                  >
+                    <div className="text-gray-500 mb-2">
+                      Erreur de chargement
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        refreshScreenshot(active.url!);
+                      }}
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Réessayer
+                    </button>
                   </div>
                 ) : (
                   <Image
