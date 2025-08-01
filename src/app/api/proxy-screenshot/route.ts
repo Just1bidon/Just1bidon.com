@@ -1,5 +1,8 @@
 import { NextRequest } from "next/server";
-import puppeteer from "puppeteer";
+
+// Configuration de l'API WebScreenshot
+const WEBSCREENSHOT_API_URL = process.env.WEBSCREENSHOT_API_URL || "http://localhost:3001";
+const WEBSCREENSHOT_TOKEN = process.env.WEBSCREENSHOT_TOKEN;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -7,6 +10,7 @@ export async function GET(req: NextRequest) {
   const width = searchParams.get("width") || "800";
   const height = searchParams.get("height") || "520";
   const format = searchParams.get("format") || "jpeg";
+  const force = searchParams.get("force") === "true";
 
   if (!url) {
     return new Response(JSON.stringify({ error: "Missing url param" }), {
@@ -15,52 +19,69 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  let browser;
+  if (!WEBSCREENSHOT_TOKEN) {
+    console.error("[PROXY-SCREENSHOT] Token WebScreenshot manquant");
+    return new Response(JSON.stringify({ 
+      error: "Configuration error - Missing API token" 
+    }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   try {
     console.log(`[PROXY-SCREENSHOT] Démarrage du screenshot pour: ${url}`);
     
-    // Lancer le navigateur
-    browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu'
-      ]
+    // Construire l'URL de l'API WebScreenshot
+    const apiParams = new URLSearchParams({
+      url,
+      width,
+      height,
+      format,
+      removeBackdrops: "true", // Active la suppression automatique des popups
+      wait: "2000", // Attente par défaut
     });
 
-    const page = await browser.newPage();
-    
-    // Configurer la taille de la fenêtre
-    await page.setViewport({
-      width: parseInt(width),
-      height: parseInt(height),
-      deviceScaleFactor: 1,
+    if (force) {
+      apiParams.set("force", "true");
+    }
+
+    const apiUrl = `${WEBSCREENSHOT_API_URL}/screenshot?${apiParams.toString()}`;
+
+    // Appel à l'API WebScreenshot avec authentification
+    const apiRes = await fetch(apiUrl, {
+      headers: {
+        "Authorization": `Bearer ${WEBSCREENSHOT_TOKEN}`,
+      },
+      // Timeout de 30 secondes pour l'API externe
+      signal: AbortSignal.timeout(30000),
     });
 
-    // Aller sur la page avec un timeout
-    await page.goto(url, { 
-      waitUntil: 'networkidle2',
-      timeout: 10000 
-    });
+    if (!apiRes.ok) {
+      const errorText = await apiRes.text();
+      console.error(`[PROXY-SCREENSHOT] Erreur API WebScreenshot: ${apiRes.status} ${apiRes.statusText}`, errorText);
+      
+      return new Response(JSON.stringify({ 
+        error: "WebScreenshot API error", 
+        status: apiRes.status,
+        statusText: apiRes.statusText,
+        details: errorText
+      }), {
+        status: apiRes.status,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
-    // Prendre le screenshot
-    const screenshot = await page.screenshot({
-      type: format as 'png' | 'jpeg',
-      quality: format === 'jpeg' ? 80 : undefined,
-      fullPage: false
-    });
+    // Récupérer l'image
+    const imageBuffer = await apiRes.arrayBuffer();
+    const contentType = apiRes.headers.get("content-type") || `image/${format}`;
 
-    console.log(`[PROXY-SCREENSHOT] Screenshot réussi pour: ${url}`);
+    console.log(`[PROXY-SCREENSHOT] Screenshot réussi pour: ${url} (${imageBuffer.byteLength} bytes)`);
 
-    return new Response(screenshot, {
+    return new Response(imageBuffer, {
       status: 200,
       headers: {
-        "Content-Type": `image/${format}`,
+        "Content-Type": contentType,
         "Cache-Control": "public, max-age=86400",
       },
     });
@@ -68,9 +89,13 @@ export async function GET(req: NextRequest) {
   } catch (e) {
     console.error(`[PROXY-SCREENSHOT] Erreur pour ${url}:`, e);
     
-    let errorMessage = "Screenshot error";
+    let errorMessage = "Proxy error";
     if (e instanceof Error) {
-      errorMessage = e.message;
+      if (e.name === 'TimeoutError') {
+        errorMessage = "Timeout - L'API WebScreenshot ne répond pas";
+      } else {
+        errorMessage = e.message;
+      }
     }
     
     return new Response(JSON.stringify({ 
@@ -80,9 +105,5 @@ export async function GET(req: NextRequest) {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
 } 
