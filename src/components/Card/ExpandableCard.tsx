@@ -92,9 +92,20 @@ export default function ExpandableCard({
       const res = await fetch(apiUrl);
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        console.error("Erreur screenshot API:", errorData);
+        console.error("Erreur screenshot API:", res.status, errorData);
+
+        // Gestion spécifique des erreurs 504/503 (service indisponible)
+        if (res.status === 504 || res.status === 503) {
+          console.warn(
+            `Service screenshot temporairement indisponible pour ${url}`
+          );
+          // Retourner null pour indiquer qu'aucune image n'est disponible
+          return null;
+        }
+
         throw new Error(
-          errorData.error || "Erreur lors du chargement du screenshot"
+          errorData.error ||
+            `Erreur ${res.status} lors du chargement du screenshot`
         );
       }
       const blob = await res.blob();
@@ -103,7 +114,8 @@ export default function ExpandableCard({
       return blobUrl;
     } catch (e) {
       console.error("Erreur fetchAndCacheScreenshot:", e);
-      return apiUrl; // fallback sur l'URL proxy si erreur
+      // En cas d'erreur réseau ou de timeout, retourner null
+      return null;
     }
   };
 
@@ -160,10 +172,14 @@ export default function ExpandableCard({
   // Précharger les images des cartes avec une URL
   useEffect(() => {
     const cardsWithUrls = cards.filter((card) => card.url);
-    cardsWithUrls.forEach((card) => {
+    cardsWithUrls.forEach(async (card) => {
       const cacheKey = `${card.url}|${PREVIEW_WIDTH}|${PREVIEW_HEIGHT}`;
       if (!imageBlobCache[cacheKey]) {
-        fetchAndCacheScreenshot(card.url!);
+        const result = await fetchAndCacheScreenshot(card.url!);
+        // Si le service de screenshot n'est pas disponible, marquer comme erreur
+        if (result === null) {
+          setImgErrors((prev) => ({ ...prev, [card.url!]: true }));
+        }
       }
     });
   }, [cards]);

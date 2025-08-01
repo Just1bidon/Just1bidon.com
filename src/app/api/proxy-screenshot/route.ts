@@ -31,6 +31,8 @@ export async function GET(req: NextRequest) {
 
   try {
     console.log(`[PROXY-SCREENSHOT] Démarrage du screenshot pour: ${url}`);
+    console.log(`[PROXY-SCREENSHOT] API URL: ${WEBSCREENSHOT_API_URL}`);
+    console.log(`[PROXY-SCREENSHOT] Token configuré: ${WEBSCREENSHOT_TOKEN ? 'OUI' : 'NON'}`);
     
     // Construire l'URL de l'API WebScreenshot
     const apiParams = new URLSearchParams({
@@ -47,15 +49,21 @@ export async function GET(req: NextRequest) {
     }
 
     const apiUrl = `${WEBSCREENSHOT_API_URL}/screenshot?${apiParams.toString()}`;
+    console.log(`[PROXY-SCREENSHOT] URL complète: ${apiUrl}`);
 
+    const startTime = Date.now();
+    
     // Appel à l'API WebScreenshot avec authentification
     const apiRes = await fetch(apiUrl, {
       headers: {
         "Authorization": `Bearer ${WEBSCREENSHOT_TOKEN}`,
       },
-      // Timeout de 30 secondes pour l'API externe
-      signal: AbortSignal.timeout(30000),
+      // Timeout de 15 secondes pour l'API externe (limite Vercel)
+      signal: AbortSignal.timeout(15000),
     });
+
+    const requestDuration = Date.now() - startTime;
+    console.log(`[PROXY-SCREENSHOT] Requête terminée en ${requestDuration}ms, statut: ${apiRes.status}`);
 
     if (!apiRes.ok) {
       const errorText = await apiRes.text();
@@ -90,9 +98,15 @@ export async function GET(req: NextRequest) {
     console.error(`[PROXY-SCREENSHOT] Erreur pour ${url}:`, e);
     
     let errorMessage = "Proxy error";
+    let statusCode = 500;
+    
     if (e instanceof Error) {
-      if (e.name === 'TimeoutError') {
+      if (e.name === 'TimeoutError' || e.name === 'AbortError') {
         errorMessage = "Timeout - L'API WebScreenshot ne répond pas";
+        statusCode = 504; // Gateway Timeout
+      } else if (e.message.includes('fetch')) {
+        errorMessage = "Service WebScreenshot indisponible";
+        statusCode = 503; // Service Unavailable
       } else {
         errorMessage = e.message;
       }
@@ -102,7 +116,7 @@ export async function GET(req: NextRequest) {
       error: errorMessage,
       details: e instanceof Error ? e.message : "Unknown error"
     }), {
-      status: 500,
+      status: statusCode,
       headers: { "Content-Type": "application/json" },
     });
   }
